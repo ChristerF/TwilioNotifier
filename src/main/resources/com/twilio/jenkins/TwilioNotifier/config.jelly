@@ -1,0 +1,27 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+      
+   <!-- Textfield -->  
+  
+  <f:entry title="To" field="toList">
+        <f:textbox/>
+   </f:entry>
+   <f:entry title="Message" field="message">
+        <f:textbox/>
+   </f:entry>
+  
+   <f:entry title="Only send message on failure or recovery?" field="onlyOnFailureOrRecovery">
+     <f:checkbox name="onlyOnFailureOrRecovery" checked="${descriptor.onlyOnFailureOrRecovery}" />
+   </f:entry>
+		
+   <f:entry title="Include the Build URL in the message?" field="includeUrl">
+     <f:checkbox name="includeUrl" checked="${descriptor.includeUrl}" />
+   </f:entry>
+   
+   <f:entry title="Send Text (SMS) message?" field="smsNotification">
+     <f:checkbox name="smsNotification" checked="${descriptor.smsNotification}" />
+   </f:entry>
+   <f:entry title="Call?" field="callNotification">
+     <f:checkbox name="callNotification" checked="${descriptor.callNotification}" />
+   </f:entry>
+</j:jelly>
