@@ -40,13 +40,13 @@ import com.twilio.sdk.resource.instance.Account;
 /**
  * A {@link TwilioNotifier} is a {@link Notifier} that uses the Rest API of communications service provider
  * {@linkplain "http://www.twilio.com/} to send text messages and make calls with the build status of individual
- * builds.
+ * builds. cgabge
  * 
  * This notifier was inspired in features and design by the Twitter Notifier plugin.
  * 
  * @author Christer Fahlgren (christer@twilio.com)
  */
-public class TwilioNotifier extends Notifier {
+public class TwilioNotifier extends Notifier {  
 
     /**
      * The message to send/read to the recipient.
