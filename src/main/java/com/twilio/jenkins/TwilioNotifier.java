@@ -204,6 +204,7 @@ public class TwilioNotifier extends Notifier {
     public Boolean getSendToCulprits() {
         return this.sendToCulprits;
     }
+
     /**
      * Converts a string to a Boolean.
      * 
@@ -273,11 +274,10 @@ public class TwilioNotifier extends Notifier {
                 final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
                 listener.getLogger().println("Message to send:" + messageToSend);
 
-             
                 List<String> culpritList = getCulpritList(build, listener.getLogger());
                 listener.getLogger().println("Culprits: " + culpritList.size());
                 listener.getLogger().println("Culprits: " + culpritList);
-                
+
                 List<String> phoneToCulprit = new ArrayList<String>();
                 for (String culprit : culpritList) {
                     Pair<String, String> userPair = userToPhoneMap.get(culprit);
@@ -419,20 +419,18 @@ public class TwilioNotifier extends Notifier {
 
     private List<String> getCulpritList(final AbstractBuild<?, ?> build, PrintStream logger) throws IOException {
         final Set<User> culprits = build.getCulprits();
-        logger.println(" Culprits size"+culprits.size());
+        logger.println(" Culprits size" + culprits.size());
         final List<String> culpritList = new ArrayList<String>();
         final ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
         if (culprits.size() > 0) {
             for (final User user : culprits) {
-                
+
                 culpritList.add(user.getId());
             }
         } else if (changeSet != null) {
-            logger.println(" Changeset "+changeSet.toString());
-             for (final Entry entry : changeSet) {
-                 logger.println(" USER "+entry.getAuthor().getDisplayName());
-                 
-                               final User user = entry.getAuthor();
+            logger.println(" Changeset " + changeSet.toString());
+            for (final Entry entry : changeSet) {
+                final User user = entry.getAuthor();
                 culpritList.add(user.getId());
             }
         }
