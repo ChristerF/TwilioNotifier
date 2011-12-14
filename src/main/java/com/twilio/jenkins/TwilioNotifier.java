@@ -429,9 +429,10 @@ public class TwilioNotifier extends Notifier {
             }
         } else if (changeSet != null) {
             logger.println(" Changeset "+changeSet.toString());
-
-            for (final Entry entry : changeSet) {
-                                final User user = entry.getAuthor();
+             for (final Entry entry : changeSet) {
+                 logger.println(" USER "+entry.getAuthor().getDisplayName());
+                 
+                               final User user = entry.getAuthor();
                 culpritList.add(user.getId());
             }
         }
