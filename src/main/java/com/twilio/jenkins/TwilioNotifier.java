@@ -337,7 +337,7 @@ public class TwilioNotifier extends Notifier {
                             sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, toNumber);
                         }
                         if (this.callNotification.booleanValue()) {
-                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, toNumber);
+                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, toNumber); 
                         }
                     }
                 }
