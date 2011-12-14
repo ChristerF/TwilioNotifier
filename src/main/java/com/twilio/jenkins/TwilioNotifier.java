@@ -196,6 +196,14 @@ public class TwilioNotifier extends Notifier {
     }
 
     /**
+     * Getter for sendToCulprits flag.
+     * 
+     * @return the sendToCulprits flag.
+     */
+    public Boolean getSendToCulprits() {
+        return this.sendToCulprits;
+    }
+    /**
      * Converts a string to a Boolean.
      * 
      * @param string
