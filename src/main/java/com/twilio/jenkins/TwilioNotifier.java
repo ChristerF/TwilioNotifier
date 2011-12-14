@@ -259,15 +259,12 @@ public class TwilioNotifier extends Notifier {
                         .getAuthToken());
                 listener.getLogger().println("Created twilio client");
 
-                String res = "";
                 if (build != null) {
 
-                    res = " The project " + build.getProject().getDisplayName();
                     substitutionAttributes.put("%PROJECT%", build.getProject().getDisplayName());
                     substitutionAttributes.put("%BUILD%", build.getDisplayName());
                     substitutionAttributes.put("%STATUS%", build.getResult().toString());
 
-                    res += " and the build " + build.getDisplayName() + " is in status " + build.getResult().toString();
                 }
                 // Get the main account (The one we used to authenticate the client
                 final Account mainAccount = client.getAccount();
@@ -275,7 +272,11 @@ public class TwilioNotifier extends Notifier {
                 final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
                 listener.getLogger().println("Message to send:" + messageToSend);
 
+             
                 List<String> culpritList = getCulpritList(build);
+                listener.getLogger().println("Culprits: " + culpritList.size());
+                listener.getLogger().println("Culprits: " + culpritList);
+                
                 List<String> phoneToCulprit = new ArrayList<String>();
                 for (String culprit : culpritList) {
                     Pair<String, String> userPair = userToPhoneMap.get(culprit);
@@ -290,7 +291,7 @@ public class TwilioNotifier extends Notifier {
                 for (final String to : toArray) {
                     final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
 
-                    final String message = messageToSend + "  " + res;
+                    final String message = messageToSend;
                     String smsMsg = message;
                     if (this.includeUrl.booleanValue()) {
                         smsMsg += " " + createTinyUrl(absoluteBuildURL);
@@ -307,7 +308,7 @@ public class TwilioNotifier extends Notifier {
                     for (final String to : phoneToCulprit) {
                         final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
 
-                        final String message = messageToSend + "  " + res;
+                        final String message = messageToSend + "  ";
                         String smsMsg = message;
                         if (this.includeUrl.booleanValue()) {
                             smsMsg += " " + createTinyUrl(absoluteBuildURL);
@@ -421,6 +422,7 @@ public class TwilioNotifier extends Notifier {
         final ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
         if (culprits.size() > 0) {
             for (final User user : culprits) {
+                
                 culpritList.add(user.getId());
             }
         } else if (changeSet != null) {
