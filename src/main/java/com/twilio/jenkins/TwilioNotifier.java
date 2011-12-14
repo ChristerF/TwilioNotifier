@@ -38,15 +38,17 @@ import com.twilio.sdk.resource.factory.SmsFactory;
 import com.twilio.sdk.resource.instance.Account;
 
 /**
- * A {@link TwilioNotifier} is a {@link Notifier} that uses the Rest API of communications service provider
- * {@linkplain "http://www.twilio.com/} to send text messages and make calls with the build status of individual
- * builds. cgabge
+ * A {@link TwilioNotifier} is a {@link Notifier} that uses the Rest API of
+ * communications service provider {@linkplain "http://www.twilio.com/} to send
+ * text messages and make calls with the build status of individual builds.
+ * cgabge
  * 
- * This notifier was inspired in features and design by the Twitter Notifier plugin.
+ * This notifier was inspired in features and design by the Twitter Notifier
+ * plugin.
  * 
  * @author Christer Fahlgren (christer@twilio.com)
  */
-public class TwilioNotifier extends Notifier {  
+public class TwilioNotifier extends Notifier {
 
     /**
      * The message to send/read to the recipient.
@@ -54,7 +56,8 @@ public class TwilioNotifier extends Notifier {
     private final String message;
 
     /**
-     * The list of phone numbers, comma separated of people who should receive the communications.
+     * The list of phone numbers, comma separated of people who should receive
+     * the communications.
      */
     private final String toList;
 
@@ -77,20 +80,27 @@ public class TwilioNotifier extends Notifier {
      * Whether a call should be made to the user.
      */
     private final Boolean callNotification;
-    
+
     private final String userList;
-    private final Map<String,String> userToPhoneMap;
-    private final Map<String,String> substitutionAttributes;
+    private final Map<String, String> userToPhoneMap;
+    private final Map<String, String> substitutionAttributes;
 
     /**
-     * Databound constructor matching the corresponding Jelly configuration items.
+     * Databound constructor matching the corresponding Jelly configuration
+     * items.
      * 
-     * @param message                  the message to send
-     * @param toList                   the comma separated list of people to send to
-     * @param onlyOnFailureOrRecovery  whether to send notification only on failure or recovery
-     * @param includeUrl               whether to include a url to the build statu
-     * @param smsNotification          whether to send text message
-     * @param callNotification         whether to call
+     * @param message
+     *            the message to send
+     * @param toList
+     *            the comma separated list of people to send to
+     * @param onlyOnFailureOrRecovery
+     *            whether to send notification only on failure or recovery
+     * @param includeUrl
+     *            whether to include a url to the build statu
+     * @param smsNotification
+     *            whether to send text message
+     * @param callNotification
+     *            whether to call
      */
     @DataBoundConstructor
     public TwilioNotifier(final String message, final String toList, final String onlyOnFailureOrRecovery,
@@ -103,32 +113,34 @@ public class TwilioNotifier extends Notifier {
         this.callNotification = convertToBoolean(callNotification);
         this.userList = userList;
         userToPhoneMap = parseUserList(userList);
-        substitutionAttributes = new HashMap<String,String>();
-        
+        substitutionAttributes = new HashMap<String, String>();
+
     }
 
-    protected static Map<String,String> parseUserList(final String users)
-    {
-        Map<String,String> resultMap = new HashMap<String,String>();
+    protected static Map<String, String> parseUserList(final String users) {
+        Map<String, String> resultMap = new HashMap<String, String>();
         String[] splitUserPairArray = users.split(",");
-        for (String userPair: splitUserPairArray)
-        {
-            String[] splitPair = userPair.split(":");
-            resultMap.put(splitPair[0], splitPair[1]);
+        if (splitUserPairArray != null) {
+            for (String userPair : splitUserPairArray) {
+
+                String[] splitPair = userPair.split(":");
+                if (splitPair != null) {
+                    resultMap.put(splitPair[0], splitPair[1]);
+                }
+            }
         }
         return resultMap;
     }
-    
-    protected static String substituteAttributes(String inputString, Map<String, String> substitutionMap)
-    {
+
+    protected static String substituteAttributes(String inputString, Map<String, String> substitutionMap) {
         String result = inputString;
-        for (String key:substitutionMap.keySet())
-        {
+        for (String key : substitutionMap.keySet()) {
             String replaceValue = substitutionMap.get(key);
             result = result.replaceAll(key, replaceValue);
         }
         return result;
     }
+
     /**
      * Getter for the toList.
      * 
@@ -168,7 +180,8 @@ public class TwilioNotifier extends Notifier {
     /**
      * Converts a string to a Boolean.
      * 
-     * @param string the string to convert to Boolean
+     * @param string
+     *            the string to convert to Boolean
      * 
      * @return the Boolean
      */
@@ -199,7 +212,7 @@ public class TwilioNotifier extends Notifier {
     public Boolean getOnlyOnFailureOrRecovery() {
         return this.onlyOnFailureOrRecovery;
     }
-    
+
     /**
      * Getter for the message.
      * 
@@ -208,7 +221,6 @@ public class TwilioNotifier extends Notifier {
     public String getUserList() {
         return this.userList;
     }
-
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) {
@@ -234,7 +246,7 @@ public class TwilioNotifier extends Notifier {
                 // Get the main account (The one we used to authenticate the client
                 final Account mainAccount = client.getAccount();
 
-                final String messageToSend = substituteAttributes(this.message,substitutionAttributes);
+                final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
                 listener.getLogger().println("Message to send:" + messageToSend);
 
                 // Send an sms
