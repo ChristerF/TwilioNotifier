@@ -18,7 +18,9 @@ import hudson.tasks.Publisher;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -61,6 +63,7 @@ public class TwilioNotifier extends Notifier {
      */
     private final String toList;
 
+    private final Boolean sendToCulprits;
     /**
      * Only send notification on failure or recovery.
      */
@@ -82,7 +85,7 @@ public class TwilioNotifier extends Notifier {
     private final Boolean callNotification;
 
     private final String userList;
-    private final Map<String, String> userToPhoneMap;
+    private final Map<String, Pair<String, String>> userToPhoneMap;
     private final Map<String, String> substitutionAttributes;
 
     /**
@@ -104,7 +107,8 @@ public class TwilioNotifier extends Notifier {
      */
     @DataBoundConstructor
     public TwilioNotifier(final String message, final String toList, final String onlyOnFailureOrRecovery,
-            final String includeUrl, final String smsNotification, final String callNotification, final String userList) {
+            final String includeUrl, final String smsNotification, final String callNotification,
+            final String userList, final String sendToCulprits) {
         this.message = message;
         this.toList = toList;
         this.onlyOnFailureOrRecovery = convertToBoolean(onlyOnFailureOrRecovery);
@@ -112,20 +116,34 @@ public class TwilioNotifier extends Notifier {
         this.smsNotification = convertToBoolean(smsNotification);
         this.callNotification = convertToBoolean(callNotification);
         this.userList = userList;
+        this.sendToCulprits = convertToBoolean(sendToCulprits);
+
         userToPhoneMap = parseUserList(userList);
         substitutionAttributes = new HashMap<String, String>();
 
     }
 
-    protected static Map<String, String> parseUserList(final String users) {
-        Map<String, String> resultMap = new HashMap<String, String>();
+    protected static Map<String, Pair<String, String>> parseUserList(final String users) {
+        Map<String, Pair<String, String>> resultMap = new HashMap<String, Pair<String, String>>();
         String[] splitUserPairArray = users.split(",");
         if (splitUserPairArray != null) {
             for (String userPair : splitUserPairArray) {
 
                 String[] splitPair = userPair.split(":");
                 if (splitPair != null) {
-                    resultMap.put(splitPair[0], splitPair[1]);
+                    if (splitPair.length > 0) {
+                        String userName = splitPair[0];
+                        if (splitPair.length > 1) {
+                            String phone = splitPair[1];
+                            if (splitPair.length > 2) {
+                                String displayName = splitPair[2];
+                                Pair<String, String> pair = new Pair<String, String>(phone, displayName);
+                                resultMap.put(userName, pair);
+                            }
+
+                        }
+                    }
+
                 }
             }
         }
@@ -249,9 +267,18 @@ public class TwilioNotifier extends Notifier {
                 final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
                 listener.getLogger().println("Message to send:" + messageToSend);
 
+                List<String> culpritList = getCulpritList(build);
+                List<String> phoneToCulprit = new ArrayList<String>();
+                for (String culprit : culpritList) {
+                    Pair<String, String> userPair = userToPhoneMap.get(culprit);
+                    if (userPair != null) {
+                        phoneToCulprit.add(userPair.getLeft());
+                    }
+                }
                 // Send an sms
                 final SmsFactory smsFactory = mainAccount.getSmsFactory();
                 final String[] toArray = getToList().split(",");
+
                 for (final String to : toArray) {
                     final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
 
@@ -267,6 +294,25 @@ public class TwilioNotifier extends Notifier {
                         call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, to);
                     }
                 }
+
+                if (sendToCulprits) {
+                    for (final String to : phoneToCulprit) {
+                        final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
+
+                        final String message = messageToSend + "  " + res;
+                        String smsMsg = message;
+                        if (this.includeUrl.booleanValue()) {
+                            smsMsg += " " + createTinyUrl(absoluteBuildURL);
+                        }
+                        if (this.smsNotification.booleanValue()) {
+                            sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, to);
+                        }
+                        if (this.callNotification.booleanValue()) {
+                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, to);
+                        }
+                    }
+                }
+
             } else {
                 listener.getLogger().println("Not notifying: " + build.getDisplayName());
 
@@ -361,27 +407,21 @@ public class TwilioNotifier extends Notifier {
         callFactory.create(callParams);
     }
 
-    private String getUserString(final AbstractBuild<?, ?> build) throws IOException {
-        final StringBuilder userString = new StringBuilder("");
+    private List<String> getCulpritList(final AbstractBuild<?, ?> build) throws IOException {
         final Set<User> culprits = build.getCulprits();
+        final List<String> culpritList = new ArrayList<String>();
         final ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
         if (culprits.size() > 0) {
             for (final User user : culprits) {
-                final MobilePhoneProperty tid = user.getProperty(MobilePhoneProperty.class);
-                if (tid.getMobilePhone() != null) {
-                    userString.append("@").append(tid.getMobilePhone()).append(" ");
-                }
+                culpritList.add(user.getId());
             }
         } else if (changeSet != null) {
             for (final Entry entry : changeSet) {
                 final User user = entry.getAuthor();
-                final MobilePhoneProperty tid = user.getProperty(MobilePhoneProperty.class);
-                if (tid.getMobilePhone() != null) {
-                    userString.append("@").append(tid.getMobilePhone()).append(" ");
-                }
+                culpritList.add(user.getId());
             }
         }
-        return userString.toString();
+        return culpritList;
     }
 
     /**

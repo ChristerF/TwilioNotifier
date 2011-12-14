@@ -12,10 +12,10 @@ public class TwilioNotifierTest {
     @Test
     public void testParsingUserList() {
         
-        Map<String,String> result = TwilioNotifier.parseUserList("A:B,C:D,E:F");
-        assertTrue(result.get("A").equals("B"));
-        assertTrue(result.get("C").equals("D"));
-        assertTrue(result.get("E").equals("F"));
+        Map<String,Pair<String,String>> result = TwilioNotifier.parseUserList("test.user:415 555 5555:Test User,C:D:E,E:F:G");
+        assertTrue(result.get("test.user").equals(new Pair<String,String>("415 555 5555", "Test User")));
+        assertTrue(result.get("C").equals(new Pair<String,String>("D", "E")));
+        assertTrue(result.get("E").equals(new Pair<String,String>("F", "G")));
         
        
     }
