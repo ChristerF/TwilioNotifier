@@ -326,7 +326,15 @@ public class TwilioNotifier extends Notifier {
                         String toNumber = to.getLeft();
                         final Map<String, String> localSubAttrs = new HashMap<String, String>(substitutionAttributes);
                         localSubAttrs.put("%CULPRIT-NAME%", to.getRight());
-                        final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
+                        String messageToSend = null;
+                        if (this.culpritMessage.isEmpty())
+                            {
+                            messageToSend = substituteAttributes(this.message, localSubAttrs);
+                            }
+                        else
+                        {
+                            messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
+                        }
 
                         final String message = messageToSend;
                         String smsMsg = message;
