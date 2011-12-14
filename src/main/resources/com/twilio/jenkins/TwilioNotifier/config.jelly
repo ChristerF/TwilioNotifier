@@ -11,6 +11,10 @@
  <f:entry title="Send to culprits?" field="sendToCulprits">
      <f:checkbox name="sendToCulprits" checked="${descriptor.sendToCulprits}" />
    </f:entry>
+   <f:entry title="Culprit message" field="culpritMessage">
+        <f:textbox/>
+   </f:entry>
+  
    <f:entry title="Message" field="message">
         <f:textbox/>
    </f:entry>
