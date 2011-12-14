@@ -16,6 +16,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -273,7 +274,7 @@ public class TwilioNotifier extends Notifier {
                 listener.getLogger().println("Message to send:" + messageToSend);
 
              
-                List<String> culpritList = getCulpritList(build);
+                List<String> culpritList = getCulpritList(build, listener.getLogger());
                 listener.getLogger().println("Culprits: " + culpritList.size());
                 listener.getLogger().println("Culprits: " + culpritList);
                 
@@ -416,8 +417,9 @@ public class TwilioNotifier extends Notifier {
         callFactory.create(callParams);
     }
 
-    private List<String> getCulpritList(final AbstractBuild<?, ?> build) throws IOException {
+    private List<String> getCulpritList(final AbstractBuild<?, ?> build, PrintStream logger) throws IOException {
         final Set<User> culprits = build.getCulprits();
+        logger.println(" Culprits size"+culprits.size());
         final List<String> culpritList = new ArrayList<String>();
         final ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
         if (culprits.size() > 0) {
@@ -426,8 +428,10 @@ public class TwilioNotifier extends Notifier {
                 culpritList.add(user.getId());
             }
         } else if (changeSet != null) {
+            logger.println(" Changeset "+changeSet.toString());
+
             for (final Entry entry : changeSet) {
-                final User user = entry.getAuthor();
+                                final User user = entry.getAuthor();
                 culpritList.add(user.getId());
             }
         }
