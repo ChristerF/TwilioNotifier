@@ -333,7 +333,7 @@ public class TwilioNotifier extends Notifier {
                             }
                         else
                         {
-                            messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
+                            messageToSend = substitute Attributes(this.culpritMessage, localSubAttrs);
                         }
 
                         final String message = messageToSend;
