@@ -227,6 +227,7 @@ public class TwilioNotifier extends Notifier {
                     res = " The project " + build.getProject().getDisplayName();
                     substitutionAttributes.put("%PROJECT%", build.getProject().getDisplayName());
                     substitutionAttributes.put("%BUILD%", build.getDisplayName());
+                    substitutionAttributes.put("%STATUS%", build.getResult().toString());
 
                     res += " and the build " + build.getDisplayName() + " is in status " + build.getResult().toString();
                 }
@@ -234,6 +235,8 @@ public class TwilioNotifier extends Notifier {
                 final Account mainAccount = client.getAccount();
 
                 final String messageToSend = substituteAttributes(this.message,substitutionAttributes);
+                listener.getLogger().println("Message to send:" + messageToSend);
+
                 // Send an sms
                 final SmsFactory smsFactory = mainAccount.getSmsFactory();
                 final String[] toArray = getToList().split(",");
