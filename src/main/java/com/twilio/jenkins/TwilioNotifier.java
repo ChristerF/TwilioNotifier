@@ -77,6 +77,10 @@ public class TwilioNotifier extends Notifier {
      * Whether a call should be made to the user.
      */
     private final Boolean callNotification;
+    
+    private final String userList;
+    private final Map<String,String> userToPhoneMap;
+    private final Map<String,String> substitutionAttributes;
 
     /**
      * Databound constructor matching the corresponding Jelly configuration items.
@@ -90,15 +94,41 @@ public class TwilioNotifier extends Notifier {
      */
     @DataBoundConstructor
     public TwilioNotifier(final String message, final String toList, final String onlyOnFailureOrRecovery,
-            final String includeUrl, final String smsNotification, final String callNotification) {
+            final String includeUrl, final String smsNotification, final String callNotification, final String userList) {
         this.message = message;
         this.toList = toList;
         this.onlyOnFailureOrRecovery = convertToBoolean(onlyOnFailureOrRecovery);
         this.includeUrl = convertToBoolean(includeUrl);
         this.smsNotification = convertToBoolean(smsNotification);
         this.callNotification = convertToBoolean(callNotification);
+        this.userList = userList;
+        userToPhoneMap = parseUserList(userList);
+        substitutionAttributes = new HashMap<String,String>();
+        
     }
 
+    protected static Map<String,String> parseUserList(final String users)
+    {
+        Map<String,String> resultMap = new HashMap<String,String>();
+        String[] splitUserPairArray = users.split(",");
+        for (String userPair: splitUserPairArray)
+        {
+            String[] splitPair = userPair.split(":");
+            resultMap.put(splitPair[0], splitPair[1]);
+        }
+        return resultMap;
+    }
+    
+    protected static String substituteAttributes(String inputString, Map<String, String> substitutionMap)
+    {
+        String result = inputString;
+        for (String key:substitutionMap.keySet())
+        {
+            String replaceValue = substitutionMap.get(key);
+            result = result.replaceAll(key, replaceValue);
+        }
+        return result;
+    }
     /**
      * Getter for the toList.
      * 
@@ -169,6 +199,16 @@ public class TwilioNotifier extends Notifier {
     public Boolean getOnlyOnFailureOrRecovery() {
         return this.onlyOnFailureOrRecovery;
     }
+    
+    /**
+     * Getter for the message.
+     * 
+     * @return the message
+     */
+    public String getUserList() {
+        return this.userList;
+    }
+
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) {
@@ -185,19 +225,22 @@ public class TwilioNotifier extends Notifier {
                 if (build != null) {
 
                     res = " The project " + build.getProject().getDisplayName();
+                    substitutionAttributes.put("%PROJECT%", build.getProject().getDisplayName());
+                    substitutionAttributes.put("%BUILD%", build.getDisplayName());
 
                     res += " and the build " + build.getDisplayName() + " is in status " + build.getResult().toString();
                 }
                 // Get the main account (The one we used to authenticate the client
                 final Account mainAccount = client.getAccount();
 
+                final String messageToSend = substituteAttributes(this.message,substitutionAttributes);
                 // Send an sms
                 final SmsFactory smsFactory = mainAccount.getSmsFactory();
                 final String[] toArray = getToList().split(",");
                 for (final String to : toArray) {
                     final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
 
-                    final String message = this.message + "  " + res;
+                    final String message = messageToSend + "  " + res;
                     String smsMsg = message;
                     if (this.includeUrl.booleanValue()) {
                         smsMsg += " " + createTinyUrl(absoluteBuildURL);
