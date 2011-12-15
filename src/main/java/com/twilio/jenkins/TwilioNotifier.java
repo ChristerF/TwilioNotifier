@@ -328,7 +328,7 @@ public class TwilioNotifier extends Notifier {
                         String messageToSend = null;
                         if (this.culpritMessage.isEmpty())
                             {
-                            messageToSend = substitute Attributes(this.message, localSubAttrs);
+                            messageToSend = substituteAttributes(this.message, localSubAttrs);
                             }
                         else
                         {
