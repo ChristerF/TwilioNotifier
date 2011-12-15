@@ -44,7 +44,6 @@ import com.twilio.sdk.resource.instance.Account;
  * A {@link TwilioNotifier} is a {@link Notifier} that uses the Rest API of
  * communications service provider {@linkplain "http://www.twilio.com/} to send
  * text messages and make calls with the build status of individual builds.
- * cgabge
  * 
  * This notifier was inspired in features and design by the Twitter Notifier
  * plugin.
@@ -333,7 +332,7 @@ public class TwilioNotifier extends Notifier {
                             }
                         else
                         {
-                            messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
+                            messageToSend = substitute Attributes(this.culpritMessage, localSubAttrs);
                         }
 
                         final String message = messageToSend;
