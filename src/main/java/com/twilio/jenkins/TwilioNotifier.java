@@ -14,6 +14,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -32,6 +33,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import com.twilio.sdk.TwilioRestClient;
@@ -169,6 +171,32 @@ public class TwilioNotifier extends Notifier {
      */
     public String getToList() {
         return this.toList;
+    }
+
+    /**
+     * Validates the toList.
+     * 
+     * @param value the toList to validate
+     * @return {@link FormValidation.ok} if valid, {@link FormValidation.error} if not valid
+     */
+    public FormValidation doCheckToList(@QueryParameter String value) {
+        if (validatePhoneNoList(value))
+            return FormValidation.ok();
+        else
+            return FormValidation
+                    .error("The to list must consist of at least one phone number. Multiple numbers are comma separated.");
+    }
+
+    private boolean validatePhoneNoList(String toList) {
+
+        String[] nrs = toList.split(",");
+        if (nrs == null)
+            return false;
+        for (String number : nrs) {
+            if (!number.matches("^([0-9\\(\\)\\/\\+ \\-]*)$"))
+                return false;
+        }
+        return false;
     }
 
     /**
@@ -326,12 +354,9 @@ public class TwilioNotifier extends Notifier {
                         final Map<String, String> localSubAttrs = new HashMap<String, String>(substitutionAttributes);
                         localSubAttrs.put("%CULPRIT-NAME%", to.getRight());
                         String messageToSend = null;
-                        if (this.culpritMessage.isEmpty())
-                            {
+                        if (this.culpritMessage.isEmpty()) {
                             messageToSend = substituteAttributes(this.message, localSubAttrs);
-                            }
-                        else
-                        {
+                        } else {
                             messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
                         }
 
@@ -344,7 +369,7 @@ public class TwilioNotifier extends Notifier {
                             sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, toNumber);
                         }
                         if (this.callNotification.booleanValue()) {
-                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, toNumber); 
+                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, toNumber);
                         }
                     }
                 }
