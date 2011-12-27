@@ -14,6 +14,18 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
+  <scm>
+    <connection>scm:git:ssh://github.com/jenkinsci/twilio-notifier-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/twilio-notifier-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/twilio-notifier-plugin</url>
+  </scm>
+   <developers>
+    <developer>
+      <id>christer</id>
+      <name>Christer Fahlgren</name>
+      <email>christer.fahlgren@gmail.com</email>
+    </developer>
+  </developers>
   <!-- get every artifact through maven.glassfish.org, which proxies all 
     the artifacts that we need -->
   <repositories>
