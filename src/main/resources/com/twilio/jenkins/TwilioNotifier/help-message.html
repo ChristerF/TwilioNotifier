@@ -1,1 +1,15 @@
-<div>This is the message sent to all the ones on the To line.</div>
+<div>
+	This is the message sent to all the ones on the To line. You can use
+	the following variables
+	<ul>
+		<li>%PROJECT% - references the name of the current project</li>
+		<li>%STATUS% - the current status of the project
+		<li>%CULPRITS% - lists the display names of the users who did the
+			check-ins associated with the current build.</li>
+	</ul>
+	<div>
+		Example:
+		<div>The project %PROJECT% is in %STATUS% due to check-ins by
+			%CULPRITS%</div>
+	</div>
+</div>

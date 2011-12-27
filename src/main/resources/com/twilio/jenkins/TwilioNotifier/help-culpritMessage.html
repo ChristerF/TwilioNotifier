@@ -1,1 +1,18 @@
-<div>This is a specific (possibly different) message sent only to the "culprits" who did the check-in causing a build failure.</div>
+<div>
+	This is a specific (possibly different) message sent only to the
+	"culprits" who did the check-in causing a build failure. You can use
+	the following variables.
+	<ul>
+		<li>%PROJECT% - references the name of the current project</li>
+		<li>%STATUS% - the current status of the project
+		<li>%CULPRITS% - lists the display names of the users who did the
+			check-ins associated with the current build.</li>
+		<li>%CULPRIT-NAME% - the display name of the culprit that the
+			current message is being sent to.</li>
+	</ul>
+	<div>
+		Example:
+		<div>Hey %CULPRIT-NAME% you just broke the build for the project
+			%PROJECT%.</div>
+	</div>
+</div>
