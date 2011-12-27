@@ -11,7 +11,7 @@
 
   <groupId>com.twilio.jenkins</groupId>
   <artifactId>TwilioNotifier</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.2.0</version>
   <packaging>hpi</packaging>
 
   <scm>
@@ -19,7 +19,7 @@
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/twilio-notifier-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/twilio-notifier-plugin</url>
   </scm>
-   <developers>
+  <developers>
     <developer>
       <id>christer</id>
       <name>Christer Fahlgren</name>
