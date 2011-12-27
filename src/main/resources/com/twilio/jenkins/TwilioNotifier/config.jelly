@@ -6,7 +6,7 @@
         <f:textbox/>
    </f:entry>
   <f:entry title="To" field="toList">
-        <f:textbox   checkUrl="'${rootURL}/plugin/TwilioNotifier/checkToList?value='+this.value"/>
+        <f:textbox   checkUrl="'descriptorByName/TwilioNotifier/checkToList?value='+this.value"/>
    </f:entry>
  <f:entry title="Send to culprits?" field="sendToCulprits">
      <f:checkbox name="sendToCulprits" checked="${descriptor.sendToCulprits}" />
