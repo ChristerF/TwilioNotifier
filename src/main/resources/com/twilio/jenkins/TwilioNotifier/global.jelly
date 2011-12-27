@@ -14,8 +14,6 @@
   -->
   <f:section title="TwilioNotifier">
    
-    <f:entry title="Authentication details"
-      description="Your Twilio account details">
       <f:entry title="Account SID" field="accountSID">
         <f:textbox />
       </f:entry>
@@ -25,6 +23,6 @@
       <f:entry title="From phone number" field="fromPhoneNumber">
         <f:textbox />
       </f:entry>
-    </f:entry>
+    
   </f:section>
 </j:jelly>
