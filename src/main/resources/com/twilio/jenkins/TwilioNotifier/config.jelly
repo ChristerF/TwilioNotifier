@@ -2,9 +2,6 @@
 
       
    <!-- Textfield -->  
-  <f:entry title="User list" field="userList">
-        <f:textbox/>
-   </f:entry>
   <f:entry title="To" field="toList">
         <f:textbox/>
    </f:entry>
