@@ -21,6 +21,11 @@
       <id>m.g.o-public</id>
       <url>http://maven.glassfish.org/content/groups/public/</url>
     </repository>
+    <repository>
+      <id>mvn-adamgent</id>
+      <url>http://mvn-adamgent.googlecode.com/svn/maven/release</url>
+      <name>Adam Gent Maven Repository</name>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -131,11 +136,10 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>com.twilio</groupId>
-      <artifactId>sdk</artifactId>
-      <version>3.0</version>
-      <scope>compile</scope>
-    </dependency>
+  		<groupId>com.twilio</groupId>
+			<artifactId>twiliojava</artifactId>
+			<version>3.3.5</version>
+		</dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
