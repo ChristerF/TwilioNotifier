@@ -3,11 +3,7 @@ package com.twilio.jenkins;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.User;
+import hudson.model.*;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.BuildStepDescriptor;
@@ -17,14 +13,9 @@ import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import net.sf.json.JSONObject;
@@ -46,13 +37,14 @@ import com.twilio.sdk.resource.instance.Account;
  * A {@link TwilioNotifier} is a {@link Notifier} that uses the Rest API of
  * communications service provider {@linkplain "http://www.twilio.com/} to send
  * text messages and make calls with the build status of individual builds.
- * 
+ *
  * This notifier was inspired in features and design by the Twitter Notifier
  * plugin.
- * 
+ *
  * @author Christer Fahlgren (christer@twilio.com)
  */
 public class TwilioNotifier extends Notifier {
+	private static final Logger LOGGER = Logger.getLogger(TwilioNotifier.class.getName());
 
     /**
      * The message to send/read to the recipient.
@@ -86,16 +78,13 @@ public class TwilioNotifier extends Notifier {
      */
     private final Boolean callNotification;
 
-    private final String userList;
-
     private final String culpritMessage;
-    private final Map<String, Pair<String, String>> userToPhoneMap;
     private final Map<String, String> substitutionAttributes;
 
     /**
      * Databound constructor matching the corresponding Jelly configuration
      * items.
-     * 
+     *
      * @param message
      *            the message to send
      * @param toList
@@ -108,51 +97,28 @@ public class TwilioNotifier extends Notifier {
      *            whether to send text message
      * @param callNotification
      *            whether to call
+	 * @param userList
+	 * 			  list of users to call or sms
+	 * @param sendToCulprits
+	 * 			  whether or not to send messages to those who broke the build
+	 * @param culpritMessage
+	 * 			  message to send to culprits
      */
     @DataBoundConstructor
     public TwilioNotifier(final String message, final String toList, final String onlyOnFailureOrRecovery,
             final String includeUrl, final String smsNotification, final String callNotification,
-            final String userList, final String sendToCulprits, final String culpritMessage) {
+            final String sendToCulprits, final String culpritMessage) {
         this.message = message;
         this.toList = toList;
         this.onlyOnFailureOrRecovery = convertToBoolean(onlyOnFailureOrRecovery);
         this.includeUrl = convertToBoolean(includeUrl);
         this.smsNotification = convertToBoolean(smsNotification);
         this.callNotification = convertToBoolean(callNotification);
-        this.userList = userList;
         this.sendToCulprits = convertToBoolean(sendToCulprits);
         this.culpritMessage = culpritMessage;
 
-        userToPhoneMap = parseUserList(userList);
         substitutionAttributes = new HashMap<String, String>();
 
-    }
-
-    protected static Map<String, Pair<String, String>> parseUserList(final String users) {
-        Map<String, Pair<String, String>> resultMap = new HashMap<String, Pair<String, String>>();
-        String[] splitUserPairArray = users.split(",");
-        if (splitUserPairArray != null) {
-            for (String userPair : splitUserPairArray) {
-
-                String[] splitPair = userPair.split(":");
-                if (splitPair != null) {
-                    if (splitPair.length > 0) {
-                        String userName = splitPair[0];
-                        if (splitPair.length > 1) {
-                            String phone = splitPair[1];
-                            if (splitPair.length > 2) {
-                                String displayName = splitPair[2];
-                                Pair<String, String> pair = new Pair<String, String>(phone, displayName);
-                                resultMap.put(userName, pair);
-                            }
-
-                        }
-                    }
-
-                }
-            }
-        }
-        return resultMap;
     }
 
     protected static String substituteAttributes(String inputString, Map<String, String> substitutionMap) {
@@ -166,7 +132,7 @@ public class TwilioNotifier extends Notifier {
 
     /**
      * Getter for the toList.
-     * 
+     *
      * @return the toList
      */
     public String getToList() {
@@ -175,11 +141,12 @@ public class TwilioNotifier extends Notifier {
 
     /**
      * Validates the toList.
-     * 
+     *
      * @param value the toList to validate
-     * @return {@link FormValidation.ok} if valid, {@link FormValidation.error} if not valid
+     * @return {@link hudson.util.FormValidation#ok()} if valid, {@link FormValidation#error(String)} if not valid
      */
-    public FormValidation doCheckToList(@QueryParameter String value) {
+    @SuppressWarnings({"UnusedDeclaration"})
+	public FormValidation doCheckToList(@QueryParameter String value) {
         if (validatePhoneNoList(value))
             return FormValidation.ok();
         else
@@ -201,55 +168,60 @@ public class TwilioNotifier extends Notifier {
 
     /**
      * Getter for the message.
-     * 
+     *
      * @return the message
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public String getMessage() {
         return this.message;
     }
 
     /**
      * Getter for the culprit message.
-     * 
+     *
      * @return the culprit message
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public String getCulpritMessage() {
         return this.culpritMessage;
     }
 
     /**
      * Getter for callNotification.
-     * 
+     *
      * @return the callNotification flag
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public Boolean getCallNotification() {
         return this.callNotification;
     }
 
     /**
      * Getter for smsNotification flag.
-     * 
+     *
      * @return the smsNotification flag.
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public Boolean getSmsNotification() {
         return this.smsNotification;
     }
 
     /**
      * Getter for sendToCulprits flag.
-     * 
+     *
      * @return the sendToCulprits flag.
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public Boolean getSendToCulprits() {
         return this.sendToCulprits;
     }
 
     /**
      * Converts a string to a Boolean.
-     * 
+     *
      * @param string
      *            the string to convert to Boolean
-     * 
+     *
      * @return the Boolean
      */
     private static Boolean convertToBoolean(final String string) {
@@ -264,148 +236,197 @@ public class TwilioNotifier extends Notifier {
 
     /**
      * Returns the include url flag.
-     * 
+     *
      * @return the includeUrl flag
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public Boolean getIncludeUrl() {
         return this.includeUrl;
     }
 
     /**
      * Getter for onlyOnFailureOrRecovery flag.
-     * 
+     *
      * @return the onlyOnFailureOrRecovery flag
      */
+	@SuppressWarnings({"UnusedDeclaration"})
     public Boolean getOnlyOnFailureOrRecovery() {
         return this.onlyOnFailureOrRecovery;
     }
 
-    /**
-     * Getter for the message.
-     * 
-     * @return the message
-     */
-    public String getUserList() {
-        return this.userList;
-    }
-
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) {
+		if(build == null) return false;
 
-        try {
-            listener.getLogger().println("Perform " + build.getDisplayName());
+		substitutionAttributes.put("%PROJECT%", build.getProject().getDisplayName());
+		substitutionAttributes.put("%BUILD%", build.getDisplayName());
+		substitutionAttributes.put("%STATUS%", build.getResult().toString());
 
-            if (shouldNotify(build)) {
-                final TwilioRestClient client = new TwilioRestClient(getDescriptor().getAccountSID(), getDescriptor()
-                        .getAuthToken());
-                listener.getLogger().println("Created twilio client");
 
-                if (build != null) {
+		if (!shouldNotify(build)) {
+			LOGGER.warning("Not notifying: " + build.getDisplayName());
+			return true;
+		}
+		LOGGER.info("Notifying: " + build.getProject().getDisplayName() + " " + build.getDisplayName());
 
-                    substitutionAttributes.put("%PROJECT%", build.getProject().getDisplayName());
-                    substitutionAttributes.put("%BUILD%", build.getDisplayName());
-                    substitutionAttributes.put("%STATUS%", build.getResult().toString());
+		// Get the main account (The one we used to authenticate the client)
+		final TwilioRestClient client = new TwilioRestClient(getDescriptor().getAccountSID(), getDescriptor().getAuthToken());
+		final Account mainAccount = client.getAccount();
 
-                }
-                // Get the main account (The one we used to authenticate the client
-                final Account mainAccount = client.getAccount();
+		Set<User> culpritList = getCulpritList(build);
+		String culpritString = culpritStringFromList(culpritList);
+		LOGGER.info("Culprits: " + culpritString);
+		substitutionAttributes.put("%CULPRITS%", culpritString);
 
-                List<String> culpritList = getCulpritList(build, listener.getLogger());
-                listener.getLogger().println("Culprits: " + culpritList.size());
-                listener.getLogger().println("Culprits: " + culpritList);
-                substitutionAttributes.put("%CULPRITS%", build.getResult().toString());
+		// Send an sms
+		final SmsFactory smsFactory = mainAccount.getSmsFactory();
+		final CallFactory callFactory = mainAccount.getCallFactory();
+		final String[] toArray = getToList().split(",");
+		final String url = getDescriptor().getUrl() + build.getUrl();
+		
+		sendToToNumbers(toArray, url, callFactory, smsFactory);
 
-                List<Pair<String, String>> phoneToCulprit = new ArrayList<Pair<String, String>>();
-                for (String culprit : culpritList) {
-                    Pair<String, String> userPair = userToPhoneMap.get(culprit);
-                    if (userPair != null) {
-                        phoneToCulprit.add(userPair);
-                    }
-                }
-                substitutionAttributes.put("%CULPRITS%", culpritStringFromList(phoneToCulprit));
-
-                // Send an sms
-                final SmsFactory smsFactory = mainAccount.getSmsFactory();
-                final String[] toArray = getToList().split(",");
-
-                if (toArray != null) {
-                    for (final String to : toArray) {
-                        final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
-                        final String messageToSend = substituteAttributes(this.message, substitutionAttributes);
-
-                        final String message = messageToSend;
-                        String smsMsg = message;
-                        if (this.includeUrl.booleanValue()) {
-                            smsMsg += " " + createTinyUrl(absoluteBuildURL);
-                        }
-                        if (this.smsNotification.booleanValue()) {
-                            sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, to);
-                        }
-                        if (this.callNotification.booleanValue()) {
-                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, to);
-                        }
-                    }
-                }
-
-                if (sendToCulprits) {
-                    for (final Pair<String, String> to : phoneToCulprit) {
-                        final String absoluteBuildURL = getDescriptor().getUrl() + build.getUrl();
-                        String toNumber = to.getLeft();
-                        final Map<String, String> localSubAttrs = new HashMap<String, String>(substitutionAttributes);
-                        localSubAttrs.put("%CULPRIT-NAME%", to.getRight());
-                        String messageToSend = null;
-                        if (this.culpritMessage.isEmpty()) {
-                            messageToSend = substituteAttributes(this.message, localSubAttrs);
-                        } else {
-                            messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
-                        }
-
-                        final String message = messageToSend;
-                        String smsMsg = message;
-                        if (this.includeUrl.booleanValue()) {
-                            smsMsg += " " + createTinyUrl(absoluteBuildURL);
-                        }
-                        if (this.smsNotification.booleanValue()) {
-                            sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, toNumber);
-                        }
-                        if (this.callNotification.booleanValue()) {
-                            call(message, mainAccount.getCallFactory(), getDescriptor().fromPhoneNumber, toNumber);
-                        }
-                    }
-                }
-
-            } else {
-                listener.getLogger().println("Not notifying: " + build.getDisplayName());
-
-            }
-        } catch (final Exception t) {
-            listener.getLogger().println("Exception " + t);
-        }
+		if (sendToCulprits) {
+			sendToCulprits(url, callFactory, culpritList, smsFactory);
+		}
 
         return true;
     }
 
-    protected static String culpritStringFromList(List<Pair<String, String>> phoneToCulprit) {
-        String result = "";
-        if (phoneToCulprit.size() == 1) {
-            result = phoneToCulprit.get(0).getRight();
-        } else {
+	private void sendToCulprits(String absoluteBuildURL, CallFactory callFactory, Set<User> culpritList, SmsFactory smsFactory) {
+		LOGGER.info("Sending to culprits");
+		if(culpritList == null || culpritList.isEmpty()) {
+			LOGGER.info("Not sending messages to culprits since there aren't any");
+			return;
+		}
+		for (final User to : culpritList) {
+			if(to == null) {
+				LOGGER.warning("There was a null value in the culprit list");
+				continue;
+			}
 
-            int c = phoneToCulprit.size() - 1;
-            for (Pair<String, String> pair : phoneToCulprit) {
-                if (c == (phoneToCulprit.size() - 1)) {
-                    result = pair.getRight();
-                } else {
-                    if (c != 0) {
-                        result = result + " " + pair.getRight();
-                    } else {
-                        result = result + " and " + pair.getRight();
-                    }
-                }
-                c--;
-            }
-        }
-        return result;
+			MobilePhoneProperty property = to.getProperty(MobilePhoneProperty.class);
+			if(property == null) {
+				LOGGER.warning("User " + to.getDisplayName() + " doesn't have the MobilePhoneProperty");
+				continue;
+			}
+
+			String toNumber = property.getMobilephone();
+			if(toNumber == null || toNumber.isEmpty()) {
+				LOGGER.warning("User " + to.getDisplayName() + " doesn't have a phone number listed");
+				continue;
+			}
+
+			LOGGER.info("Preparing to notify to " + to.getDisplayName() + " at " + toNumber);
+
+			final Map<String, String> localSubAttrs = new HashMap<String, String>(substitutionAttributes);
+			localSubAttrs.put("%CULPRIT-NAME%", to.getDisplayName());
+
+			String messageToSend;
+			if (this.culpritMessage == null || this.culpritMessage.trim().isEmpty()) {
+				LOGGER.info("Empty culprit message. Using the generic message instead");
+				messageToSend = substituteAttributes(this.message, localSubAttrs);
+			} else {
+				LOGGER.info("Using the specified culprit message.");
+				messageToSend = substituteAttributes(this.culpritMessage, localSubAttrs);
+			}
+
+			final String message = messageToSend;
+
+			if (this.smsNotification) {
+				LOGGER.info("Sending SMS notification to culprit");
+				String smsMsg = message;
+				if (this.includeUrl) {
+					try {
+						LOGGER.info("Tinyifying URL");
+						smsMsg += " " + createTinyUrl(absoluteBuildURL);
+					} catch (IOException e) {
+						logException(e);
+					}
+				}
+
+				try {
+					LOGGER.info("Sending SMS message to " + to.getDisplayName() + "(" + toNumber + "): " + smsMsg);
+					sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, toNumber);
+				} catch (TwilioRestException e) {
+					logException(e);
+				}
+			}
+			if (this.callNotification) {
+				try {
+					LOGGER.info("Sending phone call message to " + to.getDisplayName() + "(" + toNumber + "): " + message);
+					call(message, callFactory, getDescriptor().fromPhoneNumber, toNumber);
+				} catch (TwilioRestException e) {
+					logException(e);
+				} catch (UnsupportedEncodingException e) {
+					logException(e);
+				}
+			}
+		}
+	}
+
+	private void sendToToNumbers(String[] toArray, String absoluteBuildURL, CallFactory callFactory, SmsFactory smsFactory) {
+		if (toArray != null) {
+			LOGGER.info("Sending to To List");
+			for (String to : toArray) {
+				if(to == null || to.trim().isEmpty()) {
+					LOGGER.info("Not sending to To list since it was empty");
+					continue;
+				}
+				to = to.trim();
+				LOGGER.info("Sending to " + to);
+
+				final String message = substituteAttributes(this.message, this.substitutionAttributes);
+
+				if (this.smsNotification) {
+					LOGGER.info("Sending SMS to " + to);
+					String smsMsg = message;
+					if (this.includeUrl) {
+						try {
+							smsMsg += " " + createTinyUrl(absoluteBuildURL);
+						} catch (IOException e) {
+							logException(e);
+						}
+					}
+
+					try {
+						LOGGER.info("Sending SMS message to " + to + " " + smsMsg);
+						sendSMS(smsMsg, smsFactory, getDescriptor().fromPhoneNumber, to);
+					} catch (TwilioRestException e) {
+						logException(e);
+					}
+				}
+				if (this.callNotification) {
+					LOGGER.info("Sending Call to " + to);
+					try {
+						call(message, callFactory, getDescriptor().fromPhoneNumber, to);
+					} catch (TwilioRestException e) {
+						logException(e);
+					} catch (UnsupportedEncodingException e) {
+						logException(e);
+					}
+				}
+			}
+		}
+	}
+
+	protected static String culpritStringFromList(Collection<? extends ModelObject> culprits) {
+		if(culprits == null || culprits.size() <= 0) return "";
+		StringBuilder sb = new StringBuilder();
+		int c = culprits.size() - 1;
+		for (ModelObject user : culprits) {
+			String name = user.getDisplayName();
+
+			if(c == 0 && sb.length() > 0) {
+				//last item in a list of more than one
+				sb.append(" and ").append(name);
+			} else {
+				sb.append(" ").append(name);
+			}
+
+			c--;
+		}
+        return sb.substring(1); //trim off the space at the start
     }
 
     /**
@@ -413,7 +434,7 @@ public class TwilioNotifier extends Notifier {
      * includes both failed and unstable builds. A recovery is defined as a
      * successful build that follows a build that was not successful. Always
      * returns false for aborted builds.
-     * 
+     *
      * @param build
      *            the Build object
      * @return true if this build represents a recovery or failure
@@ -423,11 +444,7 @@ public class TwilioNotifier extends Notifier {
             return true;
         } else if (build.getResult() == Result.SUCCESS) {
             final AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
-            if (previousBuild != null && previousBuild.getResult() != Result.SUCCESS) {
-                return true;
-            } else {
-                return false;
-            }
+            return previousBuild != null && previousBuild.getResult() != Result.SUCCESS;
         } else {
             return false;
         }
@@ -436,29 +453,23 @@ public class TwilioNotifier extends Notifier {
     /**
      * Determine if this build results should be tweeted. Uses the local
      * settings if they are provided, otherwise the global settings.
-     * 
+     *
      * @param build
      *            the Build object
      * @return true if we should tweet this build result
      */
     protected boolean shouldNotify(final AbstractBuild<?, ?> build) {
-        if (this.onlyOnFailureOrRecovery == null) {
-            return false;
-        } else if (this.onlyOnFailureOrRecovery.booleanValue()) {
-            return isFailureOrRecovery(build);
-        } else {
-            return true;
-        }
+		return this.onlyOnFailureOrRecovery != null && (!this.onlyOnFailureOrRecovery || isFailureOrRecovery(build));
     }
 
     /**
      * Sends a text message.
-     * 
-     * @param message
-     * @param smsFactory
-     * @param from
-     * @param to
-     * @throws TwilioRestException
+     *
+     * @param message Message to send to the phone number
+     * @param smsFactory Twilio SMS Factory from the Twilio main account
+     * @param from the phone number to send this from
+     * @param to the phone number to send this to
+     * @throws TwilioRestException Thrown when there is an error from the Twilio servers
      */
     private void sendSMS(final String message, final SmsFactory smsFactory, final String from, final String to)
             throws TwilioRestException {
@@ -471,13 +482,13 @@ public class TwilioNotifier extends Notifier {
 
     /**
      * Calls and tts the message.
-     * 
-     * @param message
-     * @param callFactory
-     * @param from
-     * @param to
-     * @throws TwilioRestException
-     * @throws UnsupportedEncodingException
+     *
+     * @param message Message to be spoken
+     * @param callFactory Twilio Call Factory from the Twilio main account
+     * @param from the phone number to send this from
+     * @param to the phone number to send this to
+     * @throws TwilioRestException Thrown when there is an error from the Twilio servers
+     * @throws UnsupportedEncodingException The message is URL encoded. This is the exception thrown if there's an error when this happens
      */
     private void call(final String message, final CallFactory callFactory, final String from, final String to)
             throws TwilioRestException, UnsupportedEncodingException {
@@ -491,32 +502,26 @@ public class TwilioNotifier extends Notifier {
         callFactory.create(callParams);
     }
 
-    private List<String> getCulpritList(final AbstractBuild<?, ?> build, PrintStream logger) throws IOException {
-        final Set<User> culprits = build.getCulprits();
-        logger.println(" Culprits size" + culprits.size());
-        final List<String> culpritList = new ArrayList<String>();
-        final ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
-        if (culprits.size() > 0) {
-            for (final User user : culprits) {
-
-                culpritList.add(user.getId());
-            }
-        } else if (changeSet != null) {
-            logger.println(" Changeset " + changeSet.toString());
-            for (final Entry entry : changeSet) {
-                final User user = entry.getAuthor();
-                culpritList.add(user.getId());
-            }
-        }
-        return culpritList;
+    private Set<User> getCulpritList(final AbstractBuild<?, ?> build) {
+		final Set<User> culprits = new HashSet<User>(build.getCulprits());
+		if(culprits.size() <= 0) {
+			ChangeLogSet<? extends Entry> changeSet = build.getChangeSet();
+			if(changeSet != null) {
+				for (final Entry entry : changeSet) {
+					User author = entry.getAuthor();
+					culprits.add(author);
+				}
+			}
+		}
+		return culprits;
     }
 
     /**
      * Creates a tiny url out of a longer url.
-     * 
-     * @param url
-     * @return
-     * @throws IOException
+     *
+     * @param url URL to tiny-ify
+     * @return Returns the url returned from tinyurl.com
+     * @throws IOException thrown when there are any network connection problems to the tinyurl.com servers
      */
     private static String createTinyUrl(final String url) throws IOException {
         final HttpClient client = new HttpClient();
@@ -543,16 +548,24 @@ public class TwilioNotifier extends Notifier {
         return BuildStepMonitor.BUILD;
     }
 
+	private void logException(Throwable e) {
+		StringBuilder sb = new StringBuilder(e.getMessage()).append("\n");
+		StackTraceElement[] stackTrace = e.getStackTrace();
+		for (StackTraceElement element : stackTrace) {
+			sb.append("\t").append(element.toString()).append("\n");
+		}
+		LOGGER.severe(sb.toString());
+	}
+
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
-
         public String accountsid;
         public String authtoken;
 
         public String fromPhoneNumber;
 
-        public String getFromPhoneNumber() {
+        @SuppressWarnings({"UnusedDeclaration"})
+		public String getFromPhoneNumber() {
             return this.fromPhoneNumber;
         }
 

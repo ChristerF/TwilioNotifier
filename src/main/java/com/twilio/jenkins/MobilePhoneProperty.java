@@ -2,6 +2,7 @@ package com.twilio.jenkins;
 
 
 
+import hudson.Extension;
 import hudson.model.User;
 import hudson.model.UserProperty;
 import hudson.model.UserPropertyDescriptor;
@@ -19,16 +20,17 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean(defaultVisibility = 999)
 public class MobilePhoneProperty extends UserProperty {
 
+	@Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
-    private String mobilePhone;
+    private String mobilephone;
 
     public MobilePhoneProperty() {
     }
 
     @DataBoundConstructor
     public MobilePhoneProperty(String mobilePhone) {
-        this.mobilePhone = mobilePhone;
+        this.mobilephone = mobilePhone;
     }
 
     public UserPropertyDescriptor getDescriptor() {
@@ -41,12 +43,12 @@ public class MobilePhoneProperty extends UserProperty {
     }
 
     @Exported
-    public String getMobilePhone() {
-        return mobilePhone;
+    public String getMobilephone() {
+        return mobilephone;
     }
 
-    public void setMobilePhone(String mobilePhone) {
-        this.mobilePhone = mobilePhone;
+    public void setMobilephone(String mobilephone) {
+        this.mobilephone = mobilephone;
     }
 
     public static final class DescriptorImpl extends UserPropertyDescriptor {
@@ -63,7 +65,7 @@ public class MobilePhoneProperty extends UserProperty {
         public MobilePhoneProperty newInstance(StaplerRequest req, JSONObject formData)
                 throws hudson.model.Descriptor.FormException {
             if (formData.has("mobilephone")) {
-                return req.bindJSON(MobilePhoneProperty.class, formData);
+				return new MobilePhoneProperty((String) formData.get("mobilephone"));
             } else {
                 return new MobilePhoneProperty();
             }
@@ -71,7 +73,7 @@ public class MobilePhoneProperty extends UserProperty {
 
         @Override
         public UserProperty newInstance(User user) {
-            return null;
+            return new MobilePhoneProperty();
         }
     }
 }
